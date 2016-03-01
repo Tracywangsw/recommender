@@ -1,41 +1,45 @@
 import psycopg2
 
 def get_cursor():
-  conn_str = "host='localhost' dbname='movies' user='dbuser' password='dbuser'"
+  conn_str = "host='localhost' dbname='movie' user='postgres' password='iswear'"
   # conn_str = "host='localhost' dbname='movielen_1M' user='python' password='python'"
   conn = psycopg2.connect(conn_str)
   cursor = conn.cursor()
   return cursor
 
-def record_count(records):
-  records_count = {}
+def user_movie_rating_map(records):
+  res_map = {}
   for r in records:
-    (key_item,count_item) = r[:]
-    if key_item in records_count:
-      if count_item in records_count[key_item]: records_count[key_item][count_item] += 1
-      else: records_count[key_item][count_item] = 1
-    else: records_count.setdefault(key_item,{count_item:1})
-  return records_count
+    (userid,movieid,rating) = r[:]
+    if userid not in res_map:
+      res_map[userid] = {movieid:rating}
+    else:
+      if movieid not in res_map[userid]:
+        res_map[userid][movieid] = rating
+      else:
+        print "user rating repeat!!"
+  return res_map
+
 
 def get_mv_plots():
   cursor = get_cursor()
-  cursor.execute("select movieid,plot from plots")
+  cursor.execute("select movieid,plot from plots where movieid in (select distinct movieid from ratings)")
   return_list = cursor.fetchall()
   mv_plots = {r[0]:r[1] for r in return_list}
   return mv_plots
 
 def get_train_ratings():
   cursor = get_cursor()
-  cursor.execute("select userid,movieid from rating_train")
+  cursor.execute("select userid,movieid,rating from rating_train")
   return_list = cursor.fetchall()
-  train_rating = record_count(return_list)
+  train_rating = user_movie_rating_map(return_list)
   return train_rating
 
 def get_test_ratings():
   cursor = get_cursor()
-  cursor.execute("select userid,movieid from rating_test")
+  cursor.execute("select userid,movieid,rating from rating_test")
   return_list = cursor.fetchall()
-  test_rating = record_count(return_list)
+  test_rating = user_movie_rating_map(return_list)
   return test_rating
 
 def split_item(item):
@@ -75,7 +79,7 @@ class info():
     self.test_ratings_set = get_test_ratings()
 
   def user_train_movies(self,userid):
-    return self.train_ratings_set[userid].keys()
+    return self.train_ratings_set[userid]
 
   def movie_tags(self,movieid):
     if movieid in self.mv_tags_set:

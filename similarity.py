@@ -7,8 +7,10 @@ import multiprocessing as mp
 import math
 import pdb
 import json
+import load_topic_files
 
 db_info = db.info()
+movie_topics_map = load_topic_files.main()
 
 class user_topics(object):
   """find user concerning topics with the plots of movies the user likes"""
@@ -16,26 +18,18 @@ class user_topics(object):
     super(user_topics, self).__init__()
     self.userid = userid
 
-  def get_user_topics(self,model):
-    movie_list = db_info.user_train_movies(self.userid)
-    plot_map = db.movieid_plot_map(db_info.mv_plots_set)
-    plot_list = []
-    for m in movie_list:
-      if m in plot_map: plot_list.append(plot_map[m])
-    user_doc = self.get_plot_doc(plot_list)
-    topic_dis = lda.doc_topic_distribution(model,user_doc)
-    return topic_dis
-
-  def get_plot_doc(self,return_list):
-    str_list = []
-    for r in return_list:
-      if type(r) is tuple:
-        plot_str = ''
-        for p in r:
-          if p: plot_str += p
-        str_list.append(plot_str)
-      else: str_list.append(r)
-    return str_list
+  def get_user_topics(self):
+    user_topics_vector = np.array([0]*50)
+    user_ratings = db_info.user_train_movies(self.userid)
+    rating_sum = sum([user_ratings[m] for m in user_ratings])
+    for m in user_ratings:
+      if m in movie_topics_map:
+        normalize = user_ratings[m]/rating_sum
+        # movie_vector = [normalize*movie_topics_map[i] for i in movie_topics_map]
+        # user_topics_list = map(sum,zip(user_topics_list,movie_vector))
+        movie_vector = np.array(movie_topics_map[m])
+        user_topics_vector = user_topics_vector+normalize*movie_vector
+    return list(user_topics_vector)
 
 def get_user_topic_map(model):
   topic_map = {}

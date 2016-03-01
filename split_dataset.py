@@ -16,7 +16,7 @@ def read_file(path):
       # next(f)
       for row in f:
         row = row.strip()
-        row = row.split("::")
+        row = row.split("@")
         data_list.append(row)
     return data_list
 
