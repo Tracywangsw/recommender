@@ -23,11 +23,11 @@ def get_topic_sim_matrix():
     print i
   return matrix
 
-def get_user_neighbors(userid,top,global_sim_matrix):
+global_sim_matrix = get_topic_sim_matrix()
+def get_user_neighbors(userid,top):
   user_rank = []
-  # global_sim_matrix = get_topic_sim_matrix()
   for other in db_info.user_list:
-    if other == userid: break
+    if other == userid: continue
     key1 = str((userid,other))
     key2 = str((other,userid))
     if key1 in global_sim_matrix:
@@ -36,15 +36,15 @@ def get_user_neighbors(userid,top,global_sim_matrix):
       user_rank.append([global_sim_matrix[key2],other])
     else: print "can not find similarity between"+ key1
   user_rank.sort(reverse=True)
-  neighbor_sim_map = {u[1]:u[0] for u in user_rank[:top]}
+  neighbor_sim_map = {u[1]:u[0] for u in user_rank[0:top]}
   return neighbor_sim_map
 
 
-def recommend_for_user(userid,top_neighbor=30,top_movie=50,matrix):
-  neighbors_map = get_user_neighbors(userid,top=top_neighbor,matrix=matrix)
+def recommend_for_user(userid,top_neighbor=30,top_movie=50):
+  neighbors_map = get_user_neighbors(userid,top_neighbor)
   neighbors = tuple(neighbors_map.keys())
   neighbor_movies = db.get_movie_from_users(neighbors)
-  movies_count = list_count(neighbor_movies)
+  movies_count = list_count(neighbor_movies,neighbors_map)
   movies_count = filter_item_for_user(movies_count,userid)
   candidate_list = hash2list(movies_count)
   recommend_list = [candidate_list[i][1] for i in range(0,top_movie)]
@@ -79,3 +79,7 @@ def list2hash(list):
     (count,item) = l[:]
     hashmap[item] = count
   return hashmap
+
+def test(userid,m):
+  # m = get_topic_sim_matrix()
+  get_user_neighbors(userid,10,m)
