@@ -1,7 +1,5 @@
 # Ignore dataset files
 *.pyc
 /dataset
-/lda_model
-/sim_matrix
-/documents
-/plots
+/model_data
+/user_similarity
