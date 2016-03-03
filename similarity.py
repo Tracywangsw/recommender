@@ -5,9 +5,11 @@ import numpy as np
 import scipy.stats as stats
 import multiprocessing as mp
 import math
-import pdb
+import util
 import json
 import load_topic_files
+import csv
+import pickle
 
 db_info = db.info()
 movie_topics_map = load_topic_files.main()
@@ -44,7 +46,7 @@ def get_user_topic_map():
 
 def topic_sim_matrix(person,other,person_topic,other_topic):
   sim_matrix = {}
-  sim_matrix[str((person,other))] = topic_sim(person_topic,other_topic)
+  sim_matrix[(person,other)] = topic_sim(person_topic,other_topic)
   print sim_matrix
   return sim_matrix
 
@@ -66,23 +68,13 @@ def calulate_user_similarity(processes):
   for i in range(60):
     exe_list = user_list_list[i*node:(i+1)*node]
     results = multiprocess(processes,exe_list,user_topic_map)
-    path = 'user_similarity/' + str(i) + '.txt'
-    json.dump(results,open(path,'w'))
+    path = 'user_similarity/user_topic_sim/' + str(i) + '.pickle'
+    # with open(path,'w') as f:
+    #   pickle.dump(results,f,pickle.HIGHEST_PROTOCOL)
+    #   f.close()
+    util.write_file(results,path)
+
+
 
 def main():
   calulate_user_similarity(4)
-
-
-# movie-topics
-#       ||
-# movie-similarity
-
-def calulate_movie_similarity(processes):
-  movie_list = movie_topics_map.keys()
-  movie_list_list = db.split_item(movie_list)
-  node = len(movie_list_list)/20
-  for i in range(20):
-    exe_list = movie_list_list[i*node:(i+1)*node]
-    results = multiprocess(processes,exe_list,movie_topics_map)
-    path = 'movie_similarity/' + str(i) + '.txt'
-    json.dump(results,open(path,'w'))

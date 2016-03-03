@@ -46,8 +46,6 @@ class SplitSet:
     for u in fullset:
       userdata = self.user_data(u)
       addedsum = 0
-      # (tag_sum,movie_sum) = self.get_user_sum(u)[:]
-      # if movie_sum>=moviemin and tag_sum>=tagmin:
       for ru in userdata:
         if float(addedsum)/len(userdata) <= 0.8:
           trainset.append(ru)

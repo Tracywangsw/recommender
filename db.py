@@ -55,6 +55,13 @@ def get_movie_tags_set():
   tag_relevance = user_movie_rating_map(return_list)
   return tag_relevance
 
+def get_user_list():
+  cursor = get_cursor()
+  cursor.execute("select distinct userid from ratings order by userid")
+  return_list = cursor.fetchall()
+  user_list = [r[0] for r in return_list]
+  return user_list
+
 def split_item(item):
   l = len(item)
   item_list = []
