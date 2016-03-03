@@ -20,7 +20,6 @@ def user_movie_rating_map(records):
         print "user rating repeat!!"
   return res_map
 
-
 def get_mv_plots():
   cursor = get_cursor()
   cursor.execute("select movieid,plot from plots where movieid in (select distinct movieid from ratings)")
@@ -42,6 +41,20 @@ def get_test_ratings():
   test_rating = user_movie_rating_map(return_list)
   return test_rating
 
+def get_movie_from_users(user_list):
+  tuple_str = str(user_list)
+  cursor = get_cursor()
+  cursor.execute("select userid,movieid from rating_train where userid in "+ tuple_str)
+  return_list = cursor.fetchall()
+  return return_list
+
+def get_movie_tags_set():
+  cursor = get_cursor()
+  cursor.execute("select movieid,tagid,relevance from tag_relevance where movieid in (select distinct movieid from ratings)")
+  return_list = cursor.fetchall()
+  tag_relevance = user_movie_rating_map(return_list)
+  return tag_relevance
+
 def split_item(item):
   l = len(item)
   item_list = []
@@ -50,47 +63,31 @@ def split_item(item):
       item_list.append([item[i],item[j]])
   return item_list
 
-def get_movie_from_users(user_list):
-  tuple_str = str(user_list)
-  cursor = get_cursor()
-  cursor.execute("select userid,movieid from rating_train where userid in "+ tuple_str)
-  return_list = cursor.fetchall()
-  return return_list
-
-def movieid_plot_map(return_list):
-  mv_plot = {}
-  for r in return_list:
-    (mvid,plot) = (r,return_list[r])
-    if plot:
-      if type(plot) is tuple:
-        plot_str = ''
-        for p in plot:
-          if p: plot_str += p
-        mv_plot[mvid] = plot_str
-      else: mv_plot[mvid] = plot
-    # else: print str(mvid)+": has no plots"
-  return mv_plot
-
 class info():
   def __init__(self):
-    self.mv_plots_set = get_mv_plots()
+    # self.mv_plots_set = get_mv_plots()
     self.train_ratings_set = get_train_ratings()
     self.user_list = self.train_ratings_set.keys()
     self.test_ratings_set = get_test_ratings()
+    self.tag_set = get_movie_tags_set()
+
+  # def movie_list(self):
+  #   return self.mv_plots_set.keys()
+
+  # def movie_plot(self,movieid):
+  #   return self.mv_plots_set[movieid]
 
   def user_train_movies(self,userid):
     return self.train_ratings_set[userid]
 
-  def movie_tags(self,movieid):
-    if movieid in self.mv_tags_set:
-      return self.mv_tags_set[movieid]
-    return {}
-
-  def movie_plot(self,movieid):
-    return self.mv_plots_set[movieid]
-
   def user_test_movies(self,userid):
     return self.test_ratings_set[userid].keys()
+
+  def movie_tag_relevance(self,movieid):
+    if movieid in self.tag_set:
+      return self.tag_set[movieid]
+    return {}
+
 
 def main():
   i = info()

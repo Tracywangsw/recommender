@@ -1,5 +1,3 @@
 # Ignore dataset files
 *.pyc
-/dataset
-/model_data
-/user_similarity
+/*

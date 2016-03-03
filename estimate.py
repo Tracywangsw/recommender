@@ -47,6 +47,7 @@ def estimate_recommender(path,top_neighbor=50,top_movie=20):
   (total_pre,total_recall,total_f1) = (0,0,0)
   for u in user_list:
     recommend_list = recommend.recommend_for_user(u,top_neighbor,top_movie)
+    # recommend_list = recommend.item_recommend_for_user(u,top_neighbor,top_movie)
     test_list = db_info.user_test_movies(u)
     precision = cal_precise(recommend_list,test_list)
     recall = cal_recall(recommend_list,test_list)
@@ -65,10 +66,12 @@ def estimate_recommender(path,top_neighbor=50,top_movie=20):
   print 'average precision : ' + str(total_pre/len(user_list))
   print 'average recall : ' + str(total_recall/len(user_list))
   print 'average f1 : ' + str(total_f1/len(user_list))
+  user_info.append([0,total_pre/len(user_list),total_recall/len(user_list),total_f1/len(user_list),0,0])
   write_file(user_info,path)
 
 def main():
-  args = [[50,5],[50,10],[50,20],[50,30],[20,20],[40,20],[60,20]]
+  # args = [[50,5],[50,10],[50,20],[50,30],[20,20],[40,20],[60,20]]
+  args = [[50,20]]
   for arg in args:
     path = 'results/user_info_'+str(arg[0])+'_'+str(arg[1])+'.csv'
     estimate_recommender(path,arg[0],arg[1])

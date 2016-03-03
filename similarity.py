@@ -12,6 +12,18 @@ import load_topic_files
 db_info = db.info()
 movie_topics_map = load_topic_files.main()
 
+def topic_sim(topic_a,topic_b):
+  kl = kl_divergence(topic_a,topic_b)
+  return math.exp(-1*kl)
+
+def kl_divergence(p,q):
+  return np.sum([stats.entropy(p,q),stats.entropy(q,p)])
+
+
+# user-movie-topic
+#       ||
+# user-similarity
+
 def get_user_topics(userid):
   user_topics_vector = np.array([0]*50)
   user_ratings = db_info.user_train_movies(userid)
@@ -29,13 +41,6 @@ def get_user_topic_map():
     topic_map[u] = get_user_topics(u)
     print u
   return topic_map
-
-def topic_sim(topic_a,topic_b):
-  kl = kl_divergence(topic_a,topic_b)
-  return math.exp(-1*kl)
-
-def kl_divergence(p,q):
-  return np.sum([stats.entropy(p,q),stats.entropy(q,p)])
 
 def topic_sim_matrix(person,other,person_topic,other_topic):
   sim_matrix = {}
@@ -66,3 +71,18 @@ def calulate_user_similarity(processes):
 
 def main():
   calulate_user_similarity(4)
+
+
+# movie-topics
+#       ||
+# movie-similarity
+
+def calulate_movie_similarity(processes):
+  movie_list = movie_topics_map.keys()
+  movie_list_list = db.split_item(movie_list)
+  node = len(movie_list_list)/20
+  for i in range(20):
+    exe_list = movie_list_list[i*node:(i+1)*node]
+    results = multiprocess(processes,exe_list,movie_topics_map)
+    path = 'movie_similarity/' + str(i) + '.txt'
+    json.dump(results,open(path,'w'))
