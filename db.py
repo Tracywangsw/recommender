@@ -62,6 +62,13 @@ def get_user_list():
   user_list = [r[0] for r in return_list]
   return user_list
 
+def get_tag_name_set():
+  cursor = get_cursor()
+  cursor.execute("select tagid,tag from tags")
+  return_list = cursor.fetchall()
+  tag_info = {r[0]:r[1] for r in return_list}
+  return tag_info
+
 def split_item(item):
   l = len(item)
   item_list = []
@@ -90,10 +97,17 @@ class info():
   def user_test_movies(self,userid):
     return self.test_ratings_set[userid].keys()
 
-  def movie_tag_relevance(self,movieid):
-    if movieid in self.tag_set:
-      return self.tag_set[movieid]
-    return {}
+  # def movie_tag_relevance(self,movieid):
+  #   if movieid in self.tag_set:
+  #     return self.tag_set[movieid]
+  #   return {}
+
+class tags_info():
+  def __init__(self):
+    self.set = get_tag_name_set()
+
+  def get_name_by_id(tagid):
+    return self.set[tagid]
 
 
 def main():

@@ -72,8 +72,8 @@ def calulate_user_similarity(processes,topics):
     util.write_file(results,path)
 
 def main():
-  topics = [70,80,100]
-  global movie_topics_map 
+  topics = [30,40,80,90,100]
+  global movie_topics_map
   for t in topics:
     movie_topics_map = load_topic_files.main(t)
     calulate_user_similarity(4,t)

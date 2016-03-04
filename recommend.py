@@ -39,18 +39,25 @@ def get_tag_sim_matrix():
     print i
   return matrix
 
-def user_sim_matrix(topics=70):
-  sim_matrix = get_topic_sim_matrix(topics)
-  user_tag_matrix = get_tag_sim_matrix()
-  for u in sim_matrix:
-    sim_matrix[u] = sim_matrix[u]*user_tag_matrix[u]
-  path = 'user_similarity/matrix.pickle'
-  util.write_file(sim_matrix,path)
-  return sim_matrix
+def save_user_sim_matrix(topics=70):
+  for i in range(60):
+    topic_path = 'user_similarity/user_topic_sim/'+str(topics)+'topics/'+str(i)+".pickle"
+    tag_path = 'user_similarity/user_tag_sim/'+str(i)+".pickle"
+    topic_i = util.read_file(topic_path)
+    tag_i = util.read_file(tag_path)
+    for t in topic_i:
+      topic_i[t] = topic_i[t]*tag_i[t]
+    path = 'user_similarity/user_sim/'+str(i)+".pickle"
+    util.write_file(topic_i,path)
 
+def get_user_sim_matrix():
+  matrix = {}
+  for i in range(60):
+    path = 'user_similarity/user_sim/'+str(i)+".pickle"
+    matrix.update(util.read_file(path))
+    print i
+  return matrix
 
-# global_sim_matrix = get_topic_sim_matrix()
-# global_sim_matrix = {}
 def get_user_neighbors(userid,top):
   user_rank = []
   for other in db_info.user_list:
@@ -81,7 +88,7 @@ def main(method='tag',topics=70):
   elif method == 'lda':
     global_sim_matrix = get_topic_sim_matrix(topics)
   elif method == 'hybrid':
-    global_sim_matrix = user_sim_matrix()
+    global_sim_matrix = get_user_sim_matrix()
 
 
 # item_based recommendation
