@@ -55,13 +55,6 @@ def get_user_neighbors(userid,top):
   user_rank = []
   for other in db_info.user_list:
     if other == userid: continue
-    # key1 = (userid,other)
-    # key2 = (other,userid)
-    # if key1 in global_sim_matrix:
-    #   user_rank.append([global_sim_matrix[key1],other])
-    # elif key2 in global_sim_matrix:
-    #   user_rank.append([global_sim_matrix[key2],other])
-    # else: print "can not find similarity between"+ key1
     key = (userid,other) if userid<other else (other,userid)
     if key in global_sim_matrix:
       user_rank.append([global_sim_matrix[key],other])
@@ -81,9 +74,14 @@ def recommend_for_user(userid,top_neighbor=30,top_movie=50):
   recommend_list = [candidate_list[i][1] for i in range(0,top_movie)]
   return recommend_list
 
-def main():
+def main(method='tag',topics=70):
   global global_sim_matrix
-  global_sim_matrix = get_tag_sim_matrix()
+  if method == 'tag':
+    global_sim_matrix = get_tag_sim_matrix()
+  elif method == 'lda':
+    global_sim_matrix = get_topic_sim_matrix(topics)
+  elif method == 'hybrid':
+    global_sim_matrix = user_sim_matrix()
 
 
 # item_based recommendation
