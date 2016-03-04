@@ -23,41 +23,49 @@ def list_count(tuple_list,neighbors_map):
 
 # user_based recommend
 
-def get_topic_sim_matrix():
+def get_topic_sim_matrix(topics):
   matrix = {}
   for i in range(60):
-    path = 'user_similarity/user_topic_sim'+str(i)+".txt"
-    # sim_i = json.load(file(path))
-    sim_i = util.read_file(path)
-    matrix.update(sim_i)
+    path = 'user_similarity/user_topic_sim/'+str(topics)+'topics/'+str(i)+".pickle"
+    matrix.update(util.read_file(path))
     print i
   return matrix
 
 def get_tag_sim_matrix():
   matrix = {}
   for i in range(60):
-    path = 'user_similarity/user_tag_sim'+str(i)+".pickle"
-    # with open(path,'rb') as f:
-    #   matrix.update(pickle.load(f))
+    path = 'user_similarity/user_tag_sim/'+str(i)+".pickle"
     matrix.update(util.read_file(path))
     print i
   return matrix
 
-# def user_sim_matrix():
+def user_sim_matrix(topics=70):
+  sim_matrix = get_topic_sim_matrix(topics)
+  user_tag_matrix = get_tag_sim_matrix()
+  for u in sim_matrix:
+    sim_matrix[u] = sim_matrix[u]*user_tag_matrix[u]
+  path = 'user_similarity/matrix.pickle'
+  util.write_file(sim_matrix,path)
+  return sim_matrix
 
 
-global_sim_matrix = get_topic_sim_matrix()
+# global_sim_matrix = get_topic_sim_matrix()
+# global_sim_matrix = {}
 def get_user_neighbors(userid,top):
   user_rank = []
   for other in db_info.user_list:
     if other == userid: continue
-    key1 = (userid,other)
-    key2 = (other,userid)
-    if key1 in global_sim_matrix:
-      user_rank.append([global_sim_matrix[key1],other])
-    elif key2 in global_sim_matrix:
-      user_rank.append([global_sim_matrix[key2],other])
-    else: print "can not find similarity between"+ key1
+    # key1 = (userid,other)
+    # key2 = (other,userid)
+    # if key1 in global_sim_matrix:
+    #   user_rank.append([global_sim_matrix[key1],other])
+    # elif key2 in global_sim_matrix:
+    #   user_rank.append([global_sim_matrix[key2],other])
+    # else: print "can not find similarity between"+ key1
+    key = (userid,other) if userid<other else (other,userid)
+    if key in global_sim_matrix:
+      user_rank.append([global_sim_matrix[key],other])
+    else: print "can not find similarity between"+ str(key)
   user_rank.sort(reverse=True)
   neighbor_sim_map = {u[1]:u[0] for u in user_rank[0:top]}
   return neighbor_sim_map
@@ -72,6 +80,10 @@ def recommend_for_user(userid,top_neighbor=30,top_movie=50):
   candidate_list = util.hash2list(movies_count)
   recommend_list = [candidate_list[i][1] for i in range(0,top_movie)]
   return recommend_list
+
+def main():
+  global global_sim_matrix
+  global_sim_matrix = get_tag_sim_matrix()
 
 
 # item_based recommendation

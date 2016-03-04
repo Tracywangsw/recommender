@@ -12,7 +12,7 @@ import csv
 import pickle
 
 db_info = db.info()
-movie_topics_map = load_topic_files.main()
+movie_topics_map = {}
 
 def topic_sim(topic_a,topic_b):
   kl = kl_divergence(topic_a,topic_b)
@@ -26,8 +26,8 @@ def kl_divergence(p,q):
 #       ||
 # user-similarity
 
-def get_user_topics(userid):
-  user_topics_vector = np.array([0]*50)
+def get_user_topics(userid,topics):
+  user_topics_vector = np.array([0]*topics)
   user_ratings = db_info.user_train_movies(userid)
   rating_sum = sum([user_ratings[m] for m in user_ratings])
   for m in user_ratings:
@@ -37,10 +37,10 @@ def get_user_topics(userid):
       user_topics_vector = user_topics_vector+normalize*movie_vector
   return list(user_topics_vector)
 
-def get_user_topic_map():
+def get_user_topic_map(topics):
   topic_map = {}
   for u in db_info.user_list:
-    topic_map[u] = get_user_topics(u)
+    topic_map[u] = get_user_topics(u,topics)
     print u
   return topic_map
 
@@ -60,21 +60,20 @@ def multiprocess(processes,user_list_list,user_topic_map):
   pool.join()
   return dest
 
-def calulate_user_similarity(processes):
+def calulate_user_similarity(processes,topics):
   user_list = db_info.user_list
   user_list_list = db.split_item(user_list)
-  user_topic_map = get_user_topic_map()
+  user_topic_map = get_user_topic_map(topics)
   node = len(user_list_list)/60
   for i in range(60):
     exe_list = user_list_list[i*node:(i+1)*node]
     results = multiprocess(processes,exe_list,user_topic_map)
-    path = 'user_similarity/user_topic_sim/' + str(i) + '.pickle'
-    # with open(path,'w') as f:
-    #   pickle.dump(results,f,pickle.HIGHEST_PROTOCOL)
-    #   f.close()
+    path = 'user_similarity/user_topic_sim/'+str(topics)+'topics/' + str(i) + '.pickle'
     util.write_file(results,path)
 
-
-
 def main():
-  calulate_user_similarity(4)
+  topics = [70,80,100]
+  global movie_topics_map 
+  for t in topics:
+    movie_topics_map = load_topic_files.main(t)
+    calulate_user_similarity(4,t)

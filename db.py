@@ -76,7 +76,7 @@ class info():
     self.train_ratings_set = get_train_ratings()
     self.user_list = self.train_ratings_set.keys()
     self.test_ratings_set = get_test_ratings()
-    self.tag_set = get_movie_tags_set()
+    # self.tag_set = get_movie_tags_set()
 
   # def movie_list(self):
   #   return self.mv_plots_set.keys()

@@ -2,6 +2,7 @@ import db
 import recommend
 import json
 import csv
+import util
 
 db_info = db.info()
 
@@ -30,22 +31,16 @@ def cal_f1(recm,testm):
   if average == 0: return 0
   return precise*recall/average
 
-def write_file(recordlist,path):
-  with open(path,'w') as f:
-    a = csv.writer(f,delimiter=',')
-    a.writerows(recordlist)
-
 def estimate_recommender(path,top_neighbor=50,top_movie=20):
   estimate_json = {}
   user_info = []
   user_list = db_info.user_list
-  # user_list = []
-  # for u in db_info.user_list:
-  #   if len(db_info.user_train_movies(u)) > 20 and len(db_info.user_test_movies(u)) > 5:
-  #     user_list.append(u)
+  # for u in user_list:
+  #   if len(db_info.user_test_movies(u)) < top_movie*0.8:
+  #     user_list.remove(u)
 
   (total_pre,total_recall,total_f1) = (0,0,0)
-  for u in user_list:
+  for u in user_list[:1000]:
     recommend_list = recommend.recommend_for_user(u,top_neighbor,top_movie)
     # recommend_list = recommend.item_recommend_for_user(u,top_neighbor,top_movie)
     test_list = db_info.user_test_movies(u)
@@ -61,17 +56,18 @@ def estimate_recommender(path,top_neighbor=50,top_movie=20):
     total_f1 += f1
 
     user_train_count = len(db_info.user_train_movies(u))
-    user_info.append([u,precision,recall,f1,user_train_count,len(test_list)])
+    user_info.append([u,precision,recall,f1,user_train_count,len(test_list),recommend_list,test_list])
 
   print 'average precision : ' + str(total_pre/len(user_list))
   print 'average recall : ' + str(total_recall/len(user_list))
   print 'average f1 : ' + str(total_f1/len(user_list))
-  user_info.append([0,total_pre/len(user_list),total_recall/len(user_list),total_f1/len(user_list),0,0])
-  write_file(user_info,path)
+  # user_info.append([0,total_pre/len(user_list),total_recall/len(user_list),total_f1/len(user_list),0,0])
+  util.write_file(user_info,path,type='csv')
 
 def main():
+  recommend.main()
   # args = [[50,5],[50,10],[50,20],[50,30],[20,20],[40,20],[60,20]]
-  args = [[50,20]]
+  args = [[50,10]]
   for arg in args:
-    path = 'results/user_info_'+str(arg[0])+'_'+str(arg[1])+'.csv'
+    path = 'results/tag_based/user_info_'+str(arg[0])+'_'+str(arg[1])+'.csv'
     estimate_recommender(path,arg[0],arg[1])
