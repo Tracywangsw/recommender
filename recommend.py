@@ -34,7 +34,7 @@ def get_topic_sim_matrix(topics):
 def get_tag_sim_matrix():
   matrix = {}
   for i in range(60):
-    path = 'user_similarity/user_tag_sim/'+str(i)+".pickle"
+    path = 'user_similarity/user_tag_sim/genres/'+str(i)+".pickle"
     matrix.update(util.read_file(path))
     print i
   return matrix

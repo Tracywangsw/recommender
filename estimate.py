@@ -4,6 +4,7 @@ import json
 import csv
 import util
 import similarity
+import tags
 
 db_info = db.info()
 
@@ -66,13 +67,16 @@ def estimate_recommender(path,top_neighbor=50,top_movie=20):
   util.write_file(user_info,path,type='csv')
 
 def main():
-  topics = 300
-  similarity.main(topics)
-  recommend.save_user_sim_matrix(topics)
+  # topics = 300
+  # similarity.main(topics)
+  # recommend.save_user_sim_matrix(topics)
   # recommend.main(method='lda',topics=topics)
-  recommend.main(method='hybrid',topics=topics)
+  # recommend.main(method='hybrid',topics=topics)
+
+  tags.main()
+  recommend.main(method='tag')
   # args = [[50,5],[50,10],[50,20],[50,30],[20,20],[40,20],[60,20]]
-  args = [[50,10],[50,20]]
+  args = [[50,10],[50,50]]
   for arg in args:
-    path = 'results/hybrid/'+str(topics)+'_topics/'+str(arg[0])+'_'+str(arg[1])+'.csv'
+    path = 'results/tag_based/genres/'+str(arg[0])+'_'+str(arg[1])+'.csv'
     estimate_recommender(path,arg[0],arg[1])
