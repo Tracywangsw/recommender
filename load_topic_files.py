@@ -16,5 +16,5 @@ def load_plot_composition(path):
   return plot_composition
 
 def main(topics):
-  path = 'model_data/movie-'+str(topics)+'/plot_composition.txt'
+  path = 'model_data/movie_'+str(topics)+'/plot_composition.txt'
   return load_plot_composition(path)

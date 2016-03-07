@@ -26,7 +26,7 @@ def list_count(tuple_list,neighbors_map):
 def get_topic_sim_matrix(topics):
   matrix = {}
   for i in range(60):
-    path = 'user_similarity/user_topic_sim/'+str(topics)+'topics/'+str(i)+".pickle"
+    path = 'user_similarity/user_topic_sim/'+str(topics)+'_topics/'+str(i)+".pickle"
     matrix.update(util.read_file(path))
     print i
   return matrix
@@ -39,21 +39,21 @@ def get_tag_sim_matrix():
     print i
   return matrix
 
-def save_user_sim_matrix(topics=70):
+def save_user_sim_matrix(topics):
   for i in range(60):
-    topic_path = 'user_similarity/user_topic_sim/'+str(topics)+'topics/'+str(i)+".pickle"
+    topic_path = 'user_similarity/user_topic_sim/'+str(topics)+'_topics/'+str(i)+".pickle"
     tag_path = 'user_similarity/user_tag_sim/'+str(i)+".pickle"
     topic_i = util.read_file(topic_path)
     tag_i = util.read_file(tag_path)
     for t in topic_i:
       topic_i[t] = topic_i[t]*tag_i[t]
-    path = 'user_similarity/user_sim/'+str(i)+".pickle"
+    path = 'user_similarity/user_sim/'+str(topics)+'_hybrid/'+str(i)+".pickle"
     util.write_file(topic_i,path)
 
-def get_user_sim_matrix():
+def get_user_sim_matrix(topics):
   matrix = {}
   for i in range(60):
-    path = 'user_similarity/user_sim/'+str(i)+".pickle"
+    path = 'user_similarity/user_sim/'+str(topics)+'_hybrid/'+str(i)+".pickle"
     matrix.update(util.read_file(path))
     print i
   return matrix
@@ -88,7 +88,7 @@ def main(method='tag',topics=70):
   elif method == 'lda':
     global_sim_matrix = get_topic_sim_matrix(topics)
   elif method == 'hybrid':
-    global_sim_matrix = get_user_sim_matrix()
+    global_sim_matrix = get_user_sim_matrix(topics)
 
 
 # item_based recommendation

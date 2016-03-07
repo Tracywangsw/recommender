@@ -34,7 +34,8 @@ def get_user_topics(userid,topics):
     if m in movie_topics_map:
       normalize = user_ratings[m]/rating_sum
       movie_vector = np.array(movie_topics_map[m])
-      user_topics_vector = user_topics_vector+normalize*movie_vector
+      # user_topics_vector = user_topics_vector+normalize*movie_vector
+      user_topics_vector = user_topics_vector+movie_vector
   return list(user_topics_vector)
 
 def get_user_topic_map(topics):
@@ -68,12 +69,10 @@ def calulate_user_similarity(processes,topics):
   for i in range(60):
     exe_list = user_list_list[i*node:(i+1)*node]
     results = multiprocess(processes,exe_list,user_topic_map)
-    path = 'user_similarity/user_topic_sim/'+str(topics)+'topics/' + str(i) + '.pickle'
+    path = 'user_similarity/user_topic_sim/'+str(topics)+'_topics/' + str(i) + '.pickle'
     util.write_file(results,path)
 
-def main():
-  topics = [30,40,80,90,100]
+def main(topics):
   global movie_topics_map
-  for t in topics:
-    movie_topics_map = load_topic_files.main(t)
-    calulate_user_similarity(4,t)
+  movie_topics_map = load_topic_files.main(topics)
+  calulate_user_similarity(4,topics)

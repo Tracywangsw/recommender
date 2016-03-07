@@ -69,6 +69,13 @@ def get_tag_name_set():
   tag_info = {r[0]:r[1] for r in return_list}
   return tag_info
 
+def get_movie_info():
+  cursor = get_cursor()
+  cursor.execute("select movieid,genres from movies where movieid in (select distinct movieid from ratings)")
+  return_list = cursor.fetchall()
+  movie_info = {r[0]:r[1] for r in return_list}
+  return movie_info
+
 def split_item(item):
   l = len(item)
   item_list = []
@@ -83,7 +90,8 @@ class info():
     self.train_ratings_set = get_train_ratings()
     self.user_list = self.train_ratings_set.keys()
     self.test_ratings_set = get_test_ratings()
-    # self.tag_set = get_movie_tags_set()
+    self.movie_info = get_movie_info()
+    self.tag_set = get_movie_tags_set()
 
   # def movie_list(self):
   #   return self.mv_plots_set.keys()
@@ -96,11 +104,16 @@ class info():
 
   def user_test_movies(self,userid):
     return self.test_ratings_set[userid].keys()
+  
+  def movie_genres(self,movieid):
+    genres = self.movie_info[movieid]
+    if "|" in genres: return genres.split('|')
+    return None
 
-  # def movie_tag_relevance(self,movieid):
-  #   if movieid in self.tag_set:
-  #     return self.tag_set[movieid]
-  #   return {}
+  def movie_tag_relevance(self,movieid):
+    if movieid in self.tag_set:
+      return self.tag_set[movieid]
+    return {}
 
 class tags_info():
   def __init__(self):
