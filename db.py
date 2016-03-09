@@ -1,4 +1,5 @@
 import psycopg2
+import util
 
 def get_cursor():
   conn_str = "host='localhost' dbname='movie' user='postgres' password='iswear'"
@@ -76,6 +77,17 @@ def get_movie_info():
   movie_info = {r[0]:r[1] for r in return_list}
   return movie_info
 
+def get_user_tag():
+  cursor = get_cursor()
+  cursor.execute("select userid,movieid,tagid")
+
+def movie_train_ratings():
+  cursor = get_cursor()
+  cursor.execute("select movieid,avg(rating),count(rating) from rating_train group by movieid order by avg(rating)")
+  return_list = cursor.fetchall()
+  movie_ratings_set = {r[0]:[r[1],r[2]] for r in return_list}
+  return movie_ratings_set
+
 def split_item(item):
   l = len(item)
   item_list = []
@@ -91,7 +103,8 @@ class info():
     self.user_list = self.train_ratings_set.keys()
     self.test_ratings_set = get_test_ratings()
     self.movie_info = get_movie_info()
-    self.tag_set = get_movie_tags_set()
+    self.train_movie = movie_train_ratings()
+    # self.tag_set = get_movie_tags_set()
 
   # def movie_list(self):
   #   return self.mv_plots_set.keys()
@@ -104,6 +117,7 @@ class info():
 
   def user_test_movies(self,userid):
     return self.test_ratings_set[userid].keys()
+    # return self.test_ratings_set[userid]
   
   def movie_genres(self,movieid):
     genres = self.movie_info[movieid]
@@ -115,12 +129,67 @@ class info():
       return self.tag_set[movieid]
     return {}
 
+  def get_movie_info(self,movieid):
+    return self.train_movie[movieid]
+
 class tags_info():
   def __init__(self):
     self.set = get_tag_name_set()
 
   def get_name_by_id(tagid):
     return self.set[tagid]
+
+class movie_data_profile():
+  """do research on data"""
+  def __init__(self):
+    self.train_movie = movie_train_ratings()
+    self.hot_list = self.hot_movies()
+  
+  def get_movie_info(self,mvid):
+    return self.train_movie[mvid]
+
+  def hot_movies(self,rate=4.0,users=50):
+    hot_list = []
+    for m in self.train_movie:
+      (avg_rating,count) = self.train_movie[m][:]
+      if avg_rating >= rate and count > users:
+        hot_list.append(m)
+    return hot_list
+
+i = info()
+movie = movie_data_profile()
+def user_alanysis(userid):
+  user_test_list = i.user_test_movies(userid)
+  user_movies_set = i.user_train_movies(userid)
+  user_movie_list = user_movies_set.keys()
+  user_avg_rating = sum(user_movie_list)/len(user_movie_list)
+  record_list = []
+  k = 0
+  j = 0
+  for m in user_movie_list:
+    if m in movie.hot_list: k += 1
+  for m in user_test_list:
+    if m in movie.hot_list: j += 1
+    # rlist = []
+    # rlist.append(userid)
+    # rlist.append(user_movies_set[m])
+    # rlist.append(movie.get_movie_info(m))
+    # rlist.append(k)
+    # record_list.append(rlist)
+  # j = sum([m for m in user_test_list if m in movie.hot_list])
+  rate_train = float(k)/len(user_movie_list)
+  rate_test = float(j)/len(user_test_list)
+  record_list.append([userid,k,rate_train,j,rate_test])
+  # record_list.append(k)
+  return record_list
+
+def test():
+  test_list = get_user_list()
+  return_list = []
+  for u in test_list:
+    print u
+    return_list.extend(user_alanysis(u))
+  util.write_file(return_list,type='csv',path='user_info/whole_users_add_test.csv')
 
 
 def main():

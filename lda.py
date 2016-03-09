@@ -48,7 +48,7 @@ def load_lda(path):
 
 def get_mv_plots():
   cursor = db.get_cursor()
-  cursor.execute("select movieid,plot from plots")
+  cursor.execute("select movieid,plot from plots where movieid in (select distinct movieid from ratings)")
   return_list = cursor.fetchall()
   mv_plots = {r[0]:r[1] for r in return_list}
   return mv_plots
@@ -75,7 +75,7 @@ def build_model(num_topics,path):
   return lda_model
 
 def main():
-  build_model(50,path="lda_model/50_topics.txt")
+  build_model(50,path="50_topics.txt")
 
 def test():
   doc_a = "Brocolli is good to eat. My brother likes to eat good brocolli, but not my mother."
