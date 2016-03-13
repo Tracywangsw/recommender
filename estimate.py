@@ -33,19 +33,21 @@ def cal_f1(recm,testm):
   if average == 0: return 0
   return precise*recall/average
 
-def estimate_recommender(path,top_neighbor=50,top_movie=20):
+def estimate_recommender(path,top_neighbor=50,top_movie=10,x=0.5):
   estimate_json = {}
   user_info = []
   user_list = db_info.user_list
   # for u in user_list:
-  #   if len(db_info.user_test_movies(u)) < 21:
+  #   if len(db_info.user_test_movies(u)) < 1:
   #     user_list.remove(u)
 
   (total_pre,total_recall,total_f1) = (0,0,0)
+  arhr = 0
   for u in user_list:
-    recommend_list = recommend.recommend_for_user(u,top_neighbor,top_movie)
+    recommend_list = recommend.recommend_for_user(u,top_neighbor,top_movie,x)
     # recommend_list = recommend.item_recommend_for_user(u,top_neighbor,top_movie)
     test_list = db_info.user_test_movies(u)
+    common_list = common_list_len(recommend_list,test_list).keys()
     precision = cal_precise(recommend_list,test_list)
     recall = cal_recall(recommend_list,test_list)
     f1 = cal_f1(recommend_list,test_list)
@@ -56,27 +58,34 @@ def estimate_recommender(path,top_neighbor=50,top_movie=20):
     total_pre += precision
     total_recall += recall
     total_f1 += f1
-
     user_train_count = len(db_info.user_train_movies(u))
-    user_info.append([u,precision,recall,f1,user_train_count,len(test_list),common_list_len(recommend_list,test_list).keys()])
+
+    if recall != 0:
+      for c in common_list:
+        if c in recommend_list:
+          p = recommend_list.index(c)+1
+          arhr += 1/float(p)
+    user_info.append([u,precision,recall,f1,user_train_count,len(test_list),len(recommend_list)])
+    # user_info.append([u,precision,recall,f1,user_train_count,len(test_list),common_list_len(recommend_list,test_list).keys()])
 
   print 'average precision : ' + str(total_pre/len(user_list))
   print 'average recall : ' + str(total_recall/len(user_list))
   print 'average f1 : ' + str(total_f1/len(user_list))
-  # user_info.append([0,total_pre/len(user_list),total_recall/len(user_list),total_f1/len(user_list),0,0])
+  print 'arhr : ', arhr/len(user_list)
+  user_info.append([0,total_pre/len(user_list),total_recall/len(user_list),total_f1/len(user_list),0,0,arhr/len(user_list)])
   util.write_file(user_info,path,type='csv')
 
-def main():
+# def main():
   # topics = 300
   # similarity.main(topics)
   # recommend.save_user_sim_matrix(topics)
   # recommend.main(method='lda',topics=topics)
   # recommend.main(method='hybrid',topics=topics)
 
-  tags.main()
-  recommend.main(method='tag')
-  # args = [[50,5],[50,10],[50,20],[50,30],[20,20],[40,20],[60,20]]
-  args = [[50,10],[50,50]]
+  # tags.main()
+if __name__ == '__main__':
+  recommend.main(method='lda',topics=100,features=50)
+  args = [[50,10]]
   for arg in args:
-    path = 'results/tag_based/genres/'+str(arg[0])+'_'+str(arg[1])+'.csv'
-    estimate_recommender(path,arg[0],arg[1])
+    path = 'results/lda_based/100_topics/'+str(arg[0])+'_'+str(arg[1])+'_50features.csv'
+    estimate_recommender(path,arg[0],arg[1],x=1)

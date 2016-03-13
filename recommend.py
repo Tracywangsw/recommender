@@ -2,8 +2,11 @@ import similarity
 import db
 import json
 import util
+from pureSVD import PureSVDPredictor
+# from ranker import Ranker
 
 db_info = db.info()
+
 
 def filter_item_for_user(origin_items,userid):
   dic_copy = dict(origin_items)
@@ -16,7 +19,7 @@ def list_count(tuple_list,neighbors_map):
   dic = {}
   for t in tuple_list:
     (userid,movieid) = t[:]
-    if movieid not in dic: dic.setdefault(movieid,1)
+    if movieid not in dic: dic[movieid] = neighbors_map[userid]
     else: dic[movieid] += neighbors_map[userid]
   return dic
 
@@ -70,19 +73,54 @@ def get_user_neighbors(userid,top):
   neighbor_sim_map = {u[1]:u[0] for u in user_rank[0:top]}
   return neighbor_sim_map
 
-
-def recommend_for_user(userid,top_neighbor=30,top_movie=50):
+# ranker = Ranker(10)
+def recommend_for_user(userid,top_neighbor,top_movie,x):
   neighbors_map = get_user_neighbors(userid,top_neighbor)
   neighbors = tuple(neighbors_map.keys())
   neighbor_movies = db.get_movie_from_users(neighbors)
-  movies_count = list_count(neighbor_movies,neighbors_map)
-  movies_count = filter_item_for_user(movies_count,userid)
-  candidate_list = util.hash2list(movies_count)
-  recommend_list = [candidate_list[i][1] for i in range(0,top_movie)]
-  return recommend_list
+  # movies_count = list_count(neighbor_movies,neighbors_map)
+  # movies_count = filter_item_for_user(movies_count,userid)
+  # candidate_list = util.hash2list(movies_count)
+  # recommend_list = [candidate_list[i][1] for i in range(0,top_movie)]
+  
+  candidate_list = util.hash2list(score_items(userid,neighbors_map,neighbor_movies,x))
+  recommend_list = [candidate_list[i][1] for i in range(len(candidate_list))]
 
-def main(method='tag',topics=70):
+  # item_ids = get_candidate_item_list(userid,neighbor_movies)
+  # ratings = recommender.get_ratings(userid, item_ids)
+  # recommendations = ranker.maximizeKGreatItems(top_movie, ratings, db_info.movie_user_ratings)
+  # recommend_list = [r[1] for r in recommendations]
+  return recommend_list[:top_movie]
+
+def get_candidate_item_list(current_user,record_list):
+  current_user_movies = db_info.user_train_movies(current_user)
+  item_dir = {}
+  for r in record_list:
+    (userid,movieid) = r[:]
+    if movieid not in current_user_movies:
+      if movieid not in item_dir: item_dir[movieid] = 0
+  return item_dir.keys()
+
+def score_items(current_user,neighbors_map,record_list,n=0):
+  dic = {}
+  current_user_movies = db_info.user_train_movies(current_user)
+  for r in record_list:
+    (userid,movieid) = r[:]
+    if movieid not in current_user_movies:
+      cur_relative = recommender.get_score(current_user,movieid)
+      u_relative = recommender.get_score(userid,movieid)
+      score = n*neighbors_map[userid]*u_relative + (1-n)*cur_relative
+      if movieid not in dic: dic[movieid] = score
+      else: dic[movieid] += score
+  return dic
+
+
+def main(method='tag',topics=70,features=50):
   global global_sim_matrix
+  global recommender
+  training_items = db_info.movie_user_ratings
+  training_users = db_info.train_ratings_set
+  recommender = PureSVDPredictor(training_items, training_users, features)
   if method == 'tag':
     global_sim_matrix = get_tag_sim_matrix()
   elif method == 'lda':

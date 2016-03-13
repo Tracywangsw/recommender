@@ -8,8 +8,9 @@ def get_cursor():
   cursor = conn.cursor()
   return cursor
 
-def user_movie_rating_map(records):
+def user_movie_rating_map(records,code=1):
   res_map = {}
+  movie_map = {}
   for r in records:
     (userid,movieid,rating) = r[:]
     if userid not in res_map:
@@ -19,7 +20,17 @@ def user_movie_rating_map(records):
         res_map[userid][movieid] = rating
       else:
         print "user rating repeat!!"
-  return res_map
+
+    if code == 0:
+      if movieid not in movie_map:
+        movie_map[movieid] = {userid:rating}
+      else:
+        if userid not in movie_map[movieid]:
+          movie_map[movieid][userid] = rating
+        else:
+          print "movie rated repeat!!"
+  if code ==0: return res_map, movie_map 
+  else: return res_map
 
 def get_mv_plots():
   cursor = get_cursor()
@@ -32,8 +43,8 @@ def get_train_ratings():
   cursor = get_cursor()
   cursor.execute("select userid,movieid,rating from rating_train")
   return_list = cursor.fetchall()
-  train_rating = user_movie_rating_map(return_list)
-  return train_rating
+  user_rating, movie_rating = user_movie_rating_map(return_list,code=0)
+  return user_rating, movie_rating
 
 def get_test_ratings():
   cursor = get_cursor()
@@ -99,9 +110,9 @@ def split_item(item):
 class info():
   def __init__(self):
     # self.mv_plots_set = get_mv_plots()
-    self.train_ratings_set = get_train_ratings()
-    self.user_list = self.train_ratings_set.keys()
+    self.train_ratings_set, self.movie_user_ratings = get_train_ratings()
     self.test_ratings_set = get_test_ratings()
+    self.user_list = self.test_ratings_set.keys()
     self.movie_info = get_movie_info()
     self.train_movie = movie_train_ratings()
     # self.tag_set = get_movie_tags_set()
@@ -157,7 +168,6 @@ class movie_data_profile():
     return hot_list
 
 i = info()
-movie = movie_data_profile()
 def user_alanysis(userid):
   user_test_list = i.user_test_movies(userid)
   user_movies_set = i.user_train_movies(userid)
@@ -167,9 +177,9 @@ def user_alanysis(userid):
   k = 0
   j = 0
   for m in user_movie_list:
-    if m in movie.hot_list: k += 1
+    if m in movie_hot_list: k += 1
   for m in user_test_list:
-    if m in movie.hot_list: j += 1
+    if m in movie_hot_list: j += 1
     # rlist = []
     # rlist.append(userid)
     # rlist.append(user_movies_set[m])
@@ -184,6 +194,7 @@ def user_alanysis(userid):
   return record_list
 
 def test():
+  movie_hot_list = movie_data_profile().hot_movies(rate=4.0,users=40)
   test_list = get_user_list()
   return_list = []
   for u in test_list:
